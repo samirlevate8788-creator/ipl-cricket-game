@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPL Cricket Game</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        body { background: linear-gradient(135deg, #1a1a2e, #16213e); color: white; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+        
+        .container { width: 100%; max-width: 400px; padding: 20px; text-align: center; }
+        
+        h1 { color: #ff6b35; font-size: 28px; margin-bottom: 10px; text-shadow: 2px 2px #000; }
+        .ipl-logo { font-size: 40px; margin-bottom: 10px; }
+        blockquote { font-style: italic; color: #aaa; margin-bottom: 20px; }
+        .screen { background: rgba(255,255,255,0.1); border-radius: 15px; padding: 20px; margin-bottom: 20px; }
+        
+        .score-board { display: flex; justify-content: space-between; font-size: 18px; margin-bottom: 15px; }
+        .score { font-size: 32px; color: #4ecdc4; font-weight: bold; }
+        .overs { color: #ffe66d; }
+    
+        
+        .batsman { color: #ff6b6b; margin-bottom: 10px; font-size: 14px; }
+        
+        .shot-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        
+        button { padding: 15px; font-size: 16px; border: none; border-radius: 10px; cursor: pointer; transition: transform 0.1s; }
+        button:active { transform: scale(0.95); }
+        
+        .shot-btn { background: linear-gradient(135deg, #667eea, #764ba2); color: white; font-weight: bold; }
+        .shot-btn:hover { background: linear-gradient(135deg, #764ba2, #667eea); }
+        
+        .result { font-size: 40px; margin: 15px 0; min-height: 50px; }
+        .runs-gained { font-size: 28px; color: #4ecdc4; font-weight: bold; }
+        
+        .team-select { margin: 20px 0; }
+        select { padding: 12px; font-size: 16px; border-radius: 8px; background: #fff; color: #333; width: 100%; margin-bottom: 10px; }
+        
+        .start-btn { background: linear-gradient(135deg, #f5576c, #f093fb); width: 100%; color: white; font-size: 18px; font-weight: bold; }
+        
+        .dismissal { color: #ff6b6b; font-size: 24px; animation: flash 0.5s; }
+        
+        @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        
+        .hidden { display: none; }
+        
+        .target { color: #ffe66d; font-size: 20px; margin: 10px 0; }
+        
+        .stats { font-size: 14px; color: #aaa; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="ipl-logo">🏏</div>
+        <h1>IPL CRICKET</h1>
+        
+        <!-- TEAM SELECTION SCREEN -->
+        <div id="teamScreen" class="screen">
+            <h2>Select Teams</h2>
+            <div class="team-select">
+                <select id="batTeam">
+                    <option value="MI">Mumbai Indians</option>
+                    <option value="CSK">Chennai Super Kings</option>
+                    <option value="RCB">Royal Challengers Bangalore</option>
+                    <option value="KKR">Kolkata Knight Riders</option>
+                    <option value="SRH">Sunrisers Hyderabad</option>
+                    <option value="DC">Delhi Capitals</option>
+                    <option value="PBKS">Punjab Kings</option>
+                    <option value="RR">Rajasthan Royals</option>
+                </select>
+                <select id="bowlTeam">
+                    <option value="CSK">Chennai Super Kings</option>
+                    <option value="MI">Mumbai Indians</option>
+                    <option value="RCB">Royal Challengers Bangalore</option>
+                    <option value="KKR">Kolkata Knight Riders</option>
+                    <option value="SRH">Sunrisers Hyderabad</option>
+                    <option value="DC">Delhi Capitals</option>
+                    <option value="PBKS">Punjab Kings</option>
+                    <option value="RR">Rajasthan Royals</option>
+                </select>
+            </div>
+            <button class="start-btn" onclick="startGame()">START MATCH</button>
+        </div>
+        
+        <!-- GAME SCREEN -->
+        <div id="gameScreen" class="screen hidden">
+            <div class="score-board">
+                <div><span id="batTeamName">MI</span> <div class="score" id="score">0/0</div></div>
+                <div class="overs">Ov <span id="overs">0.0</span></div>
+            </div>
+            <div class="target">Target: <span id="target">180</span></div>
+            <div class="batsman">Batsman: <span id="batsman">Rohit Sharma</span></div>
+            
+            <div class="result" id="result">🎯</div>
+            <div class="runs-gained" id="runsGained"></div>
+            
+            <div class="shot-buttons">
+                <button class="shot-btn" onclick="playShot('defensive')">🛡️ Defensive</button>
+                <button class="shot-btn" onclick="playShot('single')">🏃 Single</button>
+                <button class="shot-btn" onclick="playShot('drive')">💥 Drive</button>
+                <button class="shot-btn" onclick="playShot('cut')">✂️ Cut</button>
+                <button class="shot-btn" onclick="playShot('pull')">💪 Pull</button>
+                <button class="shot-btn" onclick="playShot('sweep')">🧹 Sweep</button>
+                <button class="shot-btn" onclick="playShot('hook')">🏋️ Hook</button>
+                <button class="shot-btn" onclick="playShot(' slog')">🚀 Slog!</button>
+            </div>
+            
+            <div class="stats" id="stats">0 balls bowled</div>
+        </div>
+        
+        <!-- GAME OVER SCREEN -->
+        <div id="endScreen" class="screen hidden">
+            <h2 id="winnerText"></h2>
+            <div class="score" id="finalScore"></div>
+            <button class="start-btn" onclick="resetGame()">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <script>
+        let totalRuns = 0;
+        let wickets = 0;
+        let balls = 0;
+        let target = 180;
+        let targetSet = false;
+        let gameOver = false;
+        
+        const teams = {
+            'MI': ['Rohit Sharma', 'Is Kishan', 'Sky', 'Tilak', 'Nu', 'David', 'Co', 'Jofra', 'Bumrah', 'Behrendorff', 'Kuldeep'],
+            'CSK': ['Ruturaj', 'Gaikwad', 'Conway', 'Rayudu', 'Jadeja', 'MsDhoni', 'Stuart', 'Moeen', 'Chahar', 'Mukesh', 'Siri'],
+            'RCB': ['Faf', 'Kohli', 'Maxwell', 'Du Plessis', 'Rajat', 'Lomror', 'Dinesh', 'Klassen', 'Siraj', 'Mohammed', 'Karn'],
+            'KKR': ['Naman', 'Shubman', 'Venky', 'Rinku', 'Andre', 'Nitish', 'Sunil', 'Varun', 'Suyash', 'Kulwant', 'Andre'],
+            'SRH': ['Mayank', 'Rahul', 'Tripathi', 'Markram', 'Klaasen', 'Samad', 'Abhishek', 'Bhuvneshwar', 'Natarajan', 'Mayank', 'Fazal'],
+            'DC': ['Warner', 'Marsh', 'Pant', 'Powell', 'Stubbs', 'Axar', 'Nortje', 'Kuldeep', 'Kagiso', 'Anrich', 'Lalit'],
+            'PBKS': ['Mayank', 'Prabhsimran', 'Shikhar', 'Liam', 'Jitesh', 'Sam', 'Harpreet', 'Kagiso', 'Ashwin', 'Arshdeep', 'Rahul'],
+            'RR': ['Yashasvi', 'Jaiswal', 'Buttler', 'Sanju', 'Hetmyer', 'Ashwin', 'Riyan', 'Sandip', 'Yuzvendra', 'Trent', 'Obed']
+        };
+        
+        const bowlers = ['Siraj', 'Chakaravarthy', 'Natarajan', 'Nortje', 'Kuldeep', 'Ashwin', 'Yuzvendra', 'Rashid'];
+        
+        let currentBatsman = 0;
+        let bowlerIndex = 0;
+        let ballCount = 0;
+        
+        function startGame() {
+            document.getElementById('teamScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            document.getElementById('gameOver').classList.add('hidden');
+            resetGame();
+        }
+        
+        function resetGame() {
+            totalRuns = 0;
+            wickets = 0;
+            balls = 0;
+            currentBatsman = 0;
+            bowlerIndex = 0;
+            gameOver = false;
+            target = Math.floor(160 + Math.random() * 40);
+            targetSet = false;
+            
+            updateScore();
+            document.getElementById('result').textContent = '🎯';
+            document.getElementById('runsGained').textContent = '';
+            document.getElementById('stats').textContent = '0 balls bowled';
+            document.getElementById('gameOver').classList.add('hidden');
+            
+            const batTeam = document.getElementById('batTeam').value;
+            document.getElementById('batsman').textContent = teams[batTeam][currentBatsman];
+        }
+        
+        function playShot(shot) {
+            if (gameOver) return;
+            
+            const outcomes = {
+                'defensive': [0, 0, 0, 1, 0, 0],
+                'single': [0, 1, 1, 0, 1, 0],
+                'drive': [0, 4, 2, 0, 4, 1],
+                'cut': [0, 2, 0, 4, 0, 2],
+                'pull': [0, 0, 4, 0, 6, 2],
+                'sweep': [0, 1, 0, 4, 0, 3],
+                'hook': [0, 0, 2, 6, 0, 4],
+                ' slog': [0, 0, 2, 0, 6, 6]
+            };
+            
+            const weights = outcomes[shot];
+            const rand = Math.random() * weights.reduce((a, b) => a + b, 0);
+            let sum = 0;
+            let resultIndex = 0;
+            
+            for (let i = 0; i < weights.length; i++) {
+                sum += weights[i];
+                if (rand < sum) {
+                    resultIndex = i;
+                    break;
+                }
+            }
+            
+            const results = ['dot', 'single', 'double', 'four', 'six', 'out'];
+            const resultText = ['⚪ Dot', '🏃 Single', '✌️ Double', '🔶 Four!', '🚀 SIXER!', '❌ OUT!'];
+            const runs = [0, 1, 2, 4, 6, -1];
+            
+            if (resultIndex === 5) {
+                wickets++;
+                document.getElementById('result').classList.add('dismissal');
+            } else {
+                document.getElementById('result').classList.remove('dismissal');
+            }
+            
+            document.getElementById('result').textContent = resultText[resultIndex];
+            
+            if (runs[resultIndex] >= 0) {
+                totalRuns += runs[resultIndex];
+                document.getElementById('runsGained').textContent = '+' + runs[resultIndex];
+            } else {
+                document.getElementById('runsGained').textContent = 'WICKET!';
+                currentBatsman++;
+                
+                const batTeam = document.getElementById('batTeam').value;
+                if (currentBatsman < 10) {
+                    document.getElementById('batsman').textContent = teams[batTeam][currentBatsman];
+                }
+            }
+            
+            balls++;
+            bowlerIndex = Math.floor(balls / 6);
+            
+            updateScore();
+            
+            if (wickets >= 10 || balls >= 120) {
+                endGame();
+            }
+        }
+        
+        function updateScore() {
+            const overs = Math.floor(balls / 6) + '.' + (balls % 6);
+            document.getElementById('score').textContent = totalRuns + '/' + wickets;
+            document.getElementById('overs').textContent = overs;
+            document.getElementById('stats').textContent = balls + ' balls bowled';
+            document.getElementById('target').textContent = target;
+            
+            const batTeam = document.getElementById('batTeam').value;
+            document.getElementById('batTeamName').textContent = batTeam;
+            
+            if (balls > 0 && balls % 6 === 0) {
+                bowlerIndex = Math.min(bowlerIndex, bowlers.length - 1);
+            }
+        }
+        
+        function endGame() {
+            gameOver = true;
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('endScreen').classList.remove('hidden');
+            
+            let message = '';
+            if (totalRuns >= target) {
+                message = '🏆 YOU WIN!';
+            } else {
+                message = '😢 YOU LOSE!';
+            }
+            
+            document.getElementById('winnerText').textContent = message;
+            document.getElementById('finalScore').textContent = totalRuns + '/' + wickets + ' (' + (balls - (balls % 6))/6 + '.' + (balls % 6) + ')';
+        }
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPL 2026</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(180deg, #0f0c29, #302b63, #24243e); color: white; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+        
+        .app { width: 100%; max-width: 420px; background: linear-gradient(180deg, #1a1a2e, #16162a); min-height: 100vh; padding: 15px; border-radius: 0; position: relative; overflow: hidden; }
+        
+        .header { text-align: center; padding: 15px 0; background: linear-gradient(90deg, #ff416c, #ff4b2b); border-radius: 0 0 20px 20px; margin: -15px -15px 15px -15px; }
+        .header h1 { font-size: 24px; text-transform: uppercase; letter-spacing: 3px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .header .season { font-size: 12px; opacity: 0.9; }
+        
+        .team-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 15px 0; }
+        .team-card { background: rgba(255,255,255,0.1); border-radius: 12px; padding: 12px 8px; text-align: center; cursor: pointer; transition: all 0.3s; border: 2px solid transparent; }
+        .team-card:hover { transform: translateY(-3px); background: rgba(255,255,255,0.2); }
+        .team-card.selected { border-color: #00d4ff; background: rgba(0,212,255,0.2); }
+        .team-card .flag { font-size: 28px; margin-bottom: 5px; }
+        .team-card .name { font-size: 10px; font-weight: bold; opacity: 0.9; }
+        
+        .match-ground { background: linear-gradient(180deg, #2d5a27, #1a3d15); border-radius: 15px; padding: 20px; margin: 15px 0; position: relative; overflow: hidden; }
+        .match-ground::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 2px; background: rgba(255,255,255,0.3); }
+        
+        .vs-display { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .team-vs { text-align: center; }
+        .team-vs .flag { font-size: 40px; }
+        .team-vs .name { font-size: 12px; font-weight: bold; }
+        .vs-text { font-size: 24px; font-weight: bold; color: #ff4b2b; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        
+        .score-card { background: rgba(0,0,0,0.4); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+        .score-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .score-row:last-child { margin-bottom: 0; }
+        .runs-display { font-size: 36px; font-weight: bold; color: #00ff88; }
+        .runs-display.chasing { color: #ffeb3b; }
+        
+        .over-display { font-size: 18px; color: #00d4ff; }
+        .target-display { font-size: 14px; color: #ff9f43; }
+        
+        .batter-card { background: rgba(255,107,107,0.2); border-radius: 10px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .batter-info { display: flex; align-items: center; gap: 10px; }
+        .batter-icon { font-size: 24px; }
+        .batter-name { font-size: 14px; font-weight: bold; }
+        .batter-status { font-size: 11px; opacity: 0.7; }
+        
+        .commentary { background: rgba(255,255,255,0.05); border-radius: 10px; padding: 15px; margin-bottom: 15px; min-height: 60px; }
+        .commentary-text { font-size: 20px; text-align: center; animation: fadeIn 0.3s; }
+        .commentary-runs { font-size: 32px; font-weight: bold; color: #00ff88; text-align: center; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes out { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        
+        .out-anim { animation: out 0.5s; }
+        
+        .shot-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .shot-btn { background: linear-gradient(135deg, #667eea, #764ba2); border: none; border-radius: 10px; padding: 12px 5px; color: white; font-size: 11px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+        .shot-btn:active { transform: scale(0.9); }
+        .shot-btn .icon { font-size: 18px; }
+        
+        .shot-btn.dot { background: linear-gradient(135deg, #636e72, #2d3436); }
+        .shot-btn.single { background: linear-gradient(135deg, #00b894, #00cec9); }
+        .shot-btn.boundary { background: linear-gradient(135deg, #fdcb6e, #f39c12); }
+        .shot-btn.six { background: linear-gradient(135deg, #e17055, #d63031); }
+        
+        .overs-info { display: flex; justify-content: space-between; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 10px; margin: 10px 0; }
+        .over-stat { text-align: center; }
+        .over-stat .label { font-size: 10px; opacity: 0.7; }
+        .over-stat .value { font-size: 14px; font-weight: bold; }
+        
+        .powerplay { background: linear-gradient(90deg, #ff9a9e, #fecfef); padding: 8px 15px; border-radius: 20px; text-align: center; font-size: 12px; color: #333; font-weight: bold; margin-bottom: 10px; }
+        
+        .results-screen { text-align: center; padding: 40px 20px; }
+        .winner-trophy { font-size: 80px; animation: bounce 1s; }
+        .winner-text { font-size: 28px; font-weight: bold; color: #ffeb3b; margin: 20px 0; }
+        .final-score { font-size: 18px; margin-bottom: 30px; }
+        
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        
+        .btn-start { background: linear-gradient(90deg, #00d4ff, #00ff88); border: none; border-radius: 25px; padding: 15px 40px; font-size: 16px; font-weight: bold; color: #0f0c29; cursor: pointer; width: 100%; margin-top: 15px; }
+        
+        .hidden { display: none !important; }
+        
+        .field-pos { position: absolute; font-size: 16px; opacity: 0.6; }
+        
+        .partnership { background: rgba(0,212,255,0.15); border-radius: 8px; padding: 8px 12px; font-size: 12px; display: flex; justify-content: space-between; }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <h1>🏏 IPL 2026</h1>
+            <div class="season">T20 CRICKET LEAGUE</div>
+        </div>
+        
+        <!-- TEAM SELECTION -->
+        <div id="teamSelect">
+            <p style="text-align:center;margin:10px 0;opacity:0.8">Select Your Team</p>
+            <div class="team-grid" id="teamGrid"></div>
+            <p style="text-align:center;margin:10px 0;opacity:0.8">vs</p>
+            <div class="team-grid" id="opponentGrid"></div>
+            <button class="btn-start" onclick="startMatch()">START MATCH</button>
+        </div>
+        
+        <!-- GAME SCREEN -->
+        <div id="gameScreen" class="hidden">
+            <div class="match-ground">
+                <div class="vs-display">
+                    <div class="team-vs">
+                        <div class="flag" id="batTeamFlag">🇮🇳</div>
+                        <div class="name" id="batTeamName">MI</div>
+                    </div>
+                    <div class="vs-text">VS</div>
+                    <div class="team-vs">
+                        <div class="flag" id="bowlTeamFlag">🇮🇳</div>
+                        <div class="name" id="bowlTeamName">CSK</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="score-card">
+                <div class="score-row">
+                    <div>
+                        <div class="runs-display" id="scoreDisplay">0/0</div>
+                        <div class="over-display" id="overDisplay">0.0 overs</div>
+                    </div>
+                    <div>
+                        <div class="target-display" id="targetDisplay">Target: 185</div>
+                        <div class="target-display" id="rrDisplay">RR: 0.00</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="powerplay hidden" id="powerplay">⚡ POWERPLAY (0-6)</div>
+            
+            <div class="batter-card">
+                <div class="batter-info">
+                    <div class="batter-icon">🏏</div>
+                    <div>
+                        <div class="batter-name" id="batterName">Rohit Sharma</div>
+                        <div class="batter-status" id="batterStatus">Strike Rate: 0.00</div>
+                    </div>
+                </div>
+                <div class="batter-status" id="partnership">Partnership: 0</div>
+            </div>
+            
+            <div class="commentary">
+                <div class="commentary-text" id="commentary">🏏 First ball coming!</div>
+                <div class="commentary-runs" id="runsGained"></div>
+            </div>
+            
+            <div class="shot-grid" id="shotGrid"></div>
+            
+            <div class="overs-info">
+                <div class="over-stat">
+                    <div class="label">4s</div>
+                    <div class="value" id="fours">0</div>
+                </div>
+                <div class="over-stat">
+                    <div class="label">6s</div>
+                    <div class="value" id="sixes">0</div>
+                </div>
+                <div class="over-stat">
+                    <div class="label">EXTRAS</div>
+                    <div class="value" id="extras">0</div>
+                </div>
+                <div class="over-stat">
+                    <div class="label">RR</div>
+                    <div class="value" id="currentRR">0.0</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- RESULTS -->
+        <div id="resultsScreen" class="hidden results-screen">
+            <div class="winner-trophy" id="trophy">🏆</div>
+            <div class="winner-text" id="winnerText">YOU WIN!</div>
+            <div class="final-score" id="finalScore">185/2 (20.0)</div>
+            <button class="btn-start" onclick="resetGame()">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <script>
+        const teams2026 = {
+            'MI': {name: 'Mumbai Indians', flag: '🔵', colors: '#0452a8'},
+            'CSK': {name: 'Chennai Super Kings', flag: '🟡', colors: '#fec130'},
+            'RCB': {name: 'Royal Challengers', flag: '🔴', colors: '#d32f2f'},
+            'KKR': {name: 'Kolkata Knight Riders', flag: '🟣', colors: '#4a148c'},
+            'SRH': {name: 'Sunrisers Hyderabad', flag: '🟠', colors: '#ff6f00'},
+            'DC': {name: 'Delhi Capitals', flag: '🔵', colors: '#1565c0'},
+            'PBKS': {name: 'Punjab Kings', flag: '🔴', colors: '#d32f2f'},
+            'RR': {name: 'Rajasthan Royals', flag: '🟦', colors: '#ef5350'},
+            'GT': {name: 'Gujarat Titans', flag: '🟠', colors: '#ff8f00'},
+            'LSG': {name: 'Lucknow Super Giants', flag: '🟢', colors: '#00c853'},
+            'DD': {name: 'Deccan Dynamoes', flag: '🟡', colors: '#fdd835'},
+            'KR': {name: 'Kochi Royals', flag: '🔴', colors: '#b71c1c'}
+        };
+        
+        const players2026 = {
+            'MI': ['Rohit Sharma (c)', 'Ishan Kishan', 'Suryakumar Yadav', 'Tilak Varma', 'Hardik Pandya', 'Krunal Pandya', 'David Miller', 'Nehal Wadhera', 'Jofra Archer', 'Jasprit Bumrah', 'Mohammed Shami'],
+            'CSK': ['Ruturaj Gaikwad (c)', 'Devon Conway', 'Ajinkya Rahane', 'Moeen Ali', 'Ravindra Jadeja', 'MS Dhoni (wk)', 'Dwaine Pretorius', 'Deepak Chahar', 'Matheesha Pathirana', 'Tushar Deshpande', 'Maheesh Theekshana'],
+            'RCB': ['Faf du Plessis (c)', 'Virat Kohli', 'Glenn Maxwell', 'Rajat Patidar', 'Cameron Green', 'Dinesh Karthik (wk)', 'Anuj Rawat', 'Mohammed Siraj', 'Reece Topley', 'Karn Sharma', 'Vyashka Vijaykumar'],
+            'KKR': ['Shubman Gill (c)', 'Naman Dhir', 'Venkatesh Iyer', 'Rinku Singh', 'Andre Russell', 'Sunil Narine', 'Nitish Rana', 'Varun Chakravarthy', 'Andre Fletcher', 'Umesh Yadov', 'Kulwant Kedia'],
+            'SRH': ['Aiden Markram (c)', 'Mayank Agarwal', 'Rahul Tripathi', 'Harry Brook', 'Heinrich Klassen', 'Abhishek Sharma', 'Marco Jansen', 'Bhuvneshwar Kumar', 'T Natarajan', 'Mayank Markande', 'Kartik Tyagi'],
+            'DC': ['
+David Warner (c)', 'Mitchell Marsh', 'Rishabh Pant (wk)', 'Liam Livingstone', 'Prithvi Shaw', 'Axar Patel', 'Anrich Nortje', 'Kuldeep Yadav', 'Kagiso Rabada', 'Lalit Yadav', 'Amit Mishra'],
+            'PBKS': ['Shikhar Dhawan (c)', 'Mayank Agarwal ', 'Prabhsimran Singh', 'Liam Livingstone', 'Jitesh Sharma (wk)', 'Sam Curran', 'Harpreet Brar', 'Kagiso Rabada', 'Ashwin', 'Arshdeep Singh', 'Rahul Chahar'],
+            'RR': ['Jos Buttler (c)', 'Yashasvi Jaiswal', 'Sanju Samson', 'Shimron Hetmyer', 'Riyan Parag', 'Ashwin', 'Riyan Parag', 'Sandip Sharma', 'Yuzvendra Chahal', 'Trent Boult', 'Obed McCoy'],
